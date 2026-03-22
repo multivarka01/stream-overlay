@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+
+<title>Stream Panel</title>
+
+<style>
+
+body {
+  background: #0b0f1a;
+  color: white;
+  font-family: Arial;
+  padding: 40px;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+}
+
+.card {
+  background: #11182b;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+  font-size: 16px;
+}
+
+.show {
+  background: #00ccff;
+}
+
+.hide {
+  background: #ff4d4d;
+}
+
+.preview {
+  max-width: 100%;
+  margin-top: 15px;
+  border-radius: 8px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Загрузка медиа на стрим</h2>
+
+<input type="file" id="file">
+
+<div class="card" id="card" style="display:none;">
+
+<div id="preview"></div>
+
+<button id="toggle" class="show">
+Показать на стрим
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const ws = new WebSocket("wss://ws.ifelse.io");
+
+let src = "";
+let type = "";
+let visible = false;
+
+const fileInput = document.getElementById("file");
+const card = document.getElementById("card");
+const preview = document.getElementById("preview");
+const toggle = document.getElementById("toggle");
+
+fileInput.onchange = function() {
+
+  const file = this.files[0];
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+
+    src = e.target.result;
+
+    type = file.type.includes("video") ? "video" : "image";
+
+    preview.innerHTML = "";
+
+    if (type === "image") {
+
+      const img = document.createElement("img");
+      img.src = src;
+      img.className = "preview";
+      preview.appendChild(img);
+    }
+
+    if (type === "video") {
+
+      const video = document.createElement("video");
+      video.src = src;
+      video.controls = true;
+      video.className = "preview";
+      preview.appendChild(video);
+    }
+
+    card.style.display = "block";
+  };
+
+  reader.readAsDataURL(file);
+};
+
+toggle.onclick = () => {
+
+  if (!visible) {
+
+    ws.send(JSON.stringify({
+      type: type,
+      src: src
+    }));
+
+    toggle.innerText = "Убрать со стрима";
+    toggle.className = "hide";
+
+    visible = true;
+
+  } else {
+
+    ws.send(JSON.stringify({
+      type: "hide"
+    }));
+
+    toggle.innerText = "Показать на стрим";
+    toggle.className = "show";
+
+    visible = false;
+  }
+
+};
+
+</script>
+
+</body>
+</html>
