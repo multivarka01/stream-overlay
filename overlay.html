@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+
+<title>Stream Overlay</title>
+
+<style>
+
+body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* контейнер */
+#overlay {
+  position: fixed;
+  inset: 0;
+}
+
+/* медиа */
+.media {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  opacity: 0;
+  max-width: 900px;
+  transition: 0.5s ease;
+}
+
+.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="overlay"></div>
+
+<script>
+
+const ws = new WebSocket("wss://ws.ifelse.io");
+
+const overlay = document.getElementById("overlay");
+
+ws.onopen = () => {
+  console.log("Overlay connected");
+};
+
+ws.onmessage = (event) => {
+
+  const data = JSON.parse(event.data);
+
+  if (data.type === "image") {
+
+    overlay.innerHTML = "";
+
+    const img = document.createElement("img");
+
+    img.src = data.src;
+    img.className = "media";
+
+    overlay.appendChild(img);
+
+    setTimeout(() => {
+      img.classList.add("show");
+    }, 50);
+  }
+
+  if (data.type === "video") {
+
+    overlay.innerHTML = "";
+
+    const video = document.createElement("video");
+
+    video.src = data.src;
+    video.autoplay = true;
+    video.loop = true;
+    video.className = "media";
+
+    overlay.appendChild(video);
+
+    setTimeout(() => {
+      video.classList.add("show");
+    }, 50);
+  }
+
+  if (data.type === "hide") {
+
+    const media = document.querySelector(".media");
+
+    if (media) {
+      media.classList.remove("show");
+
+      setTimeout(() => {
+        overlay.innerHTML = "";
+      }, 500);
+    }
+  }
+
+};
+
+</script>
+
+</body>
+</html>
